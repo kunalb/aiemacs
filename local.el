@@ -82,17 +82,16 @@ apps are not started from a shell."
   :ensure t
   :config
 
-  ;; DeepSeek offers an OpenAI compatible API
   (gptel-make-openai "DeepSeek"
     :host "api.deepseek.com"
     :endpoint "/chat/completions"
     :stream t
-    :key "sk-aaf43d13fe7a430abd2c2bf98ebba305"
+    :key (getenv "DEEPSEEK_API_KEY")
     :models '(deepseek-chat deepseek-reasoner))
 
   (gptel-make-anthropic "Claude"
     :stream t
-    :key "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")
+    :key (getenv "ANTHROPIC_API_KEY"))
 
   (setq gptel-backend
   (gptel-make-openai "Foundry"
