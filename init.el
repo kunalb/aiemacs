@@ -387,8 +387,12 @@
 (use-package eglot
   :config
   (add-to-list 'eglot-server-programs '(go-mode . ("gopls")))
-  (add-to-list 'eglot-server-programs '((c-mode c++-mode) . ("clangd")))
-  (add-to-list 'eglot-server-programs '(python-mode . ("pylsp"))))
+  (add-to-list 'eglot-server-programs '((c-mode c++-mode) . ("clangd"))))
+
+(use-package eglot-python-preset
+  :after eglot
+  :custom (eglot-python-preset-lsp-server 'ty)
+  :config (eglot-python-preset-setup))
 
 (global-set-key (kbd "C-c o") 'ff-find-other-file)
 

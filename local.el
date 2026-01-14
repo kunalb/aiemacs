@@ -147,11 +147,6 @@ Looks for .venv directory in project root and activates the Python interpreter."
 (use-package blacken)
 (use-package magit)
 
-(use-package eglot-python-preset
-  :after eglot
-  :custom (eglot-python-preset-lsp-server 'ty)
-  :config (eglot-python-preset-setup))
-
 ;; Insert a compact timestamp for markdown notes.
 (defun knl-insert-timestamp ()
   "Insert the current date/time."
