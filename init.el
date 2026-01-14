@@ -286,41 +286,8 @@
 (use-package vterm)
 
 ;;; Tmux integration
-(setq tr--last-command nil)
-
-(defun tr (command)
-  "Run COMMAND in the currently active tmux pane."
-  (interactive "sCommand: ")
-  (setq tr--last-command command)
-  (call-process "tmux" nil nil nil "send-keys" command "Enter"))
-
-(defun trr ()
-  "Re-run the previous tmux command."
-  (interactive)
-  (if tr--last-command
-      (call-process "tmux" nil nil nil "send-keys" tr--last-command "Enter")
-    (message "No previous command")))
-
-(defun trb ()
-  "Send buffer to tmux."
-  (interactive)
-  (call-process "tmux" nil nil nil "send-keys" (buffer-string) "Enter"))
-
-(defun trl ()
-  "Send current line to tmux."
-  (interactive)
-  (call-process "tmux" nil nil nil "send-keys" (thing-at-point 'line) "Enter"))
-
-(defun trh (start end)
-  "Send region to tmux."
-  (interactive "r")
-  (call-process "tmux" nil nil nil "send-keys" (buffer-substring start end) "Enter"))
-
-(global-set-key (kbd "C-c x") 'tr)
-(global-set-key (kbd "C-c r") 'trr)
-(global-set-key (kbd "C-c b") 'trb)
-(global-set-key (kbd "C-c h") 'trh)
-(global-set-key (kbd "C-c l") 'trl)
+(require 'tmux)
+(tmux-setup-keys)
 
 ;;;; ============================================================================
 ;;;; AI / LLM INTEGRATION
@@ -371,53 +338,7 @@
   (message (buffer-file-name)))
 
 ;;; Theme manipulation
-(defun desaturate-color (color-hex)
-  "Convert COLOR-HEX to its desaturated equivalent."
-  (require 'color)
-  (apply 'color-rgb-to-hex
-         (append (apply 'color-hsl-to-rgb
-                        (apply 'color-desaturate-hsl
-                               `(,@(apply 'color-rgb-to-hsl
-                                          (color-name-to-rgb color-hex)) 100)))
-                 '(2))))
-
-(defun transform-theme-colors (fn)
-  "Apply FN to colors on every active face."
-  (mapc
-   (lambda (face)
-     (mapc
-      (lambda (attr)
-        (let ((current (face-attribute face attr)))
-          (unless (or (not current) (listp current)
-                      (string= current "unspecified") (string= current "t"))
-            (set-face-attribute face nil attr (funcall fn face current)))))
-      '(:foreground :background :underline :overline :box :strike-through :distant-foreground))
-     (mapc
-      (lambda (complex-attr)
-        (let* ((full (copy-tree (face-attribute face complex-attr)))
-               (current (if (listp full) (member :color full))))
-          (unless (or (not current) (not (listp full)))
-            (setcar (cdr current) (funcall fn face (cadr current)))
-            (set-face-attribute face nil complex-attr full))))
-      '(:underline :overline :box)))
-   (face-list)))
-
-(defun desaturate-theme ()
-  "Desaturate all currently active face colors."
-  (interactive)
-  (transform-theme-colors (lambda (_face color) (desaturate-color color))))
-
-(defun invert-theme ()
-  "Take the complement of all currently active colors."
-  (interactive)
-  (require 'color)
-  (transform-theme-colors
-   (lambda (_face color) (apply 'color-rgb-to-hex (color-complement color))))
-  (let ((current-ns-appearance (assoc 'ns-appearance default-frame-alist)))
-    (cond ((eq (cdr current-ns-appearance) 'light)
-           (setf (cdr current-ns-appearance) 'dark))
-          ((eq (cdr current-ns-appearance) 'dark)
-           (setf (cdr current-ns-appearance) 'light)))))
+(require 'theme)
 
 ;;; Writing
 (use-package olivetti)
