@@ -11,7 +11,7 @@ custom.el        # Emacs customize output (auto-generated)
 lisp/            # Custom elisp modules
   ai.el          # AI agent invocation via agent-shell
   clipboard.el   # WSL2 clipboard (explicit Windows copy/paste)
-  python.el      # Python utilities (uv-activate)
+  uv.el          # uv virtual environment activation
   theme.el       # Theme manipulation (desaturate, invert)
   tmux.el        # Tmux pane integration
   utils.el       # General utilities (PATH setup, timestamps)
