@@ -66,15 +66,6 @@ apps are not started from a shell."
   :ensure t
   :hook (eglot-managed-mode . company-mode))
 
-; (use-package yasnippet
-;   :ensure t
-;   :config
-;   (yas-global-mode 1))
-;
-; (use-package yasnippet-snippets
-;   :ensure t
-;   :after yasnippet)
-
 (use-package olivetti)
 
 
@@ -154,24 +145,7 @@ Looks for .venv directory in project root and activates the Python interpreter."
     (message "Activated UV Python environment at %s" venv-path))
       (error "No UV Python environment found in %s" venv-path))))
 
-; (use-package copilot
-;   :vc (:url "https://github.com/copilot-emacs/copilot.el"
-;     :rev :newest
-;     :branch "main"))
-
-; ;; for eat terminal backend:
-; (use-package eat
-;   :straight (:type git
-;      :host codeberg
-;      :repo "akib/emacs-eat"
-;      :files ("*.el" ("term" "term/*.el") "*.texi"
-;        "*.ti" ("terminfo/e" "terminfo/e/*")
-;        ("terminfo/65" "terminfo/65/*")
-;        ("integration" "integration/*")
-;        (:exclude ".dir-locals.el" "*-tests.el"))))
-
-;; for vterm terminal backend:
-(use-package vterm :straight t)
+(use-package vterm)
 
 (use-package eca)
 
@@ -202,35 +176,3 @@ Looks for .venv directory in project root and activates the Python interpreter."
   (insert (format-time-string "%Y-%m-%d %H:%M")))
 
 (setq auto-save-visited-interval 2)
-
-; remove the comments and just have the code
-; (use-package
-;   whisper.el
-;   :custom (whisper-model "small"))
-
-; (straight-use-package
-;  '(monet :type git :host github :repo "stevemolitor/monet"))
-;
-; ;; install claude-code.el, using :depth 1 to reduce download size:
-; (use-package claude-code
-;   :straight (:type git :host github :repo "stevemolitor/claude-code.el" :branch "main" :depth 1
-;      :files ("*.el" (:exclude "images/*")))
-;   :bind-keymap
-;   ("C-c c" . claude-code-command-map) ;; or your preferred key
-;   ;; Optionally define a repeat map so that "M" will cycle thru Claude auto-accept/plan/confirm modes after invoking claude-code-cycle-mode / C-c M.
-;   :bind
-;   (:repeat-map my-claude-code-map ("M" . claude-code-cycle-mode))
-;   :config
-;   ;; optional IDE integration with Monet
-;   (add-hook 'claude-code-process-environment-functions #'monet-start-server-function)
-;   (monet-mode 1)
-;   (claude-code-mode))
-;
-; ;;; AI Code interface
-; (use-package ai-code-interface
-;   :straight (:host github :repo "tninja/ai-code-interface.el")
-;   :config
-;   (ai-code-set-backend  'codex)
-;   (global-set-key (kbd "C-c a") #'ai-code-menu)
-;   (with-eval-after-load 'magit
-;     (ai-code-magit-setup-transients)))
