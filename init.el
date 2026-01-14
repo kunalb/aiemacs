@@ -2,30 +2,31 @@
 
 ;;; Commentary:
 ;; A refreshed emacs configuration with my most used packages and configurations.
-;; Updated with the help of Claude.
 
+;;;; ============================================================================
+;;;; PACKAGE MANAGEMENT
+;;;; ============================================================================
 
-;;; Package Management
 (setq package-enable-at-startup nil)
 
-;;;; Bootstrap straight.el
+;;; Bootstrap straight.el
 (defvar bootstrap-version)
 (let ((bootstrap-file
        (expand-file-name
-  "straight/repos/straight.el/bootstrap.el"
-  (or (bound-and-true-p straight-base-dir)
-      user-emacs-directory)))
+        "straight/repos/straight.el/bootstrap.el"
+        (or (bound-and-true-p straight-base-dir)
+            user-emacs-directory)))
       (bootstrap-version 7))
   (unless (file-exists-p bootstrap-file)
     (with-current-buffer
-  (url-retrieve-synchronously
-   "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
-   'silent 'inhibit-cookies)
+        (url-retrieve-synchronously
+         "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
+         'silent 'inhibit-cookies)
       (goto-char (point-max))
       (eval-print-last-sexp)))
   (load bootstrap-file nil 'nomessage))
 
-;;;; Bootstrap use-package
+;;; Bootstrap use-package
 (setq straight-use-package-by-default t)
 (straight-use-package 'use-package)
 (straight-use-package 'bind-key)
@@ -35,58 +36,81 @@
 (use-package project
   :straight (:type built-in))
 
+;;;; ============================================================================
+;;;; CORE SETUP
+;;;; ============================================================================
+
 ;;; Load custom lisp
 (add-to-list 'load-path (concat user-emacs-directory "lisp"))
 
-;;; Customization
+;;; Customization file
 (setq custom-file (concat user-emacs-directory "custom.el"))
 (load custom-file 'noerror)
 
-;;; UI Configuration
-;;;; Disable unnecessary UI elements
+;;; Path configuration
+(require 'utils)
+(set-exec-path-from-shell)
+
+;;; Clipboard
+(require 'clipboard)
+
+;;;; ============================================================================
+;;;; UI CONFIGURATION
+;;;; ============================================================================
+
+;;; Disable unnecessary UI elements
 (tool-bar-mode -1)
 (menu-bar-mode -1)
-(when (boundp 'fringe-mode)
-  (fringe-mode -1))
-(when (boundp 'scroll-bar-mode)
-  (scroll-bar-mode -1))
+(when (boundp 'fringe-mode) (fringe-mode -1))
+(when (boundp 'scroll-bar-mode) (scroll-bar-mode -1))
 
-;;;; Set margins
+;;; Margins
 (setq-default left-margin-width 1 right-margin-width 1)
 
-;;;; Mouse settings
+;;; Mouse settings
 (xterm-mouse-mode)
 (setq mouse-wheel-progressive-speed nil
       focus-follows-mouse "auto-raise"
       mouse-autoselect-window t)
 
-;;;; Theme management
+;;; Theme management
 (defun clear-previous-themes (&rest _)
   "Clear existing theme settings instead of layering them."
   (mapc #'disable-theme custom-enabled-themes))
 (advice-add 'load-theme :before #'clear-previous-themes)
 
-;;;; Startup settings
+;;; Startup settings
 (setq inhibit-startup-message t
       inhibit-splash-screen t
       initial-scratch-message nil
       ring-bell-function 'ignore)
 
-;;;; Window management
+;;; Window management
 (winner-mode t)
 
-;;;; Display settings
+;;; Display settings
 (add-hook 'prog-mode-hook 'display-line-numbers-mode)
 (pixel-scroll-mode)
 (setq compilation-window-height 15)
 (setq-default truncate-lines t)
+(setq display-line-numbers-width 4)
 
-;;; Evil Mode
+;;; Mode line
+(setq mode-line-format
+      (list "%& %b%n" " ~ " "%m" " ~ " "%l:%c"))
+
+;;; Performance
+(setq-default xterm-query-timeout nil)
+
+;;;; ============================================================================
+;;;; EVIL MODE
+;;;; ============================================================================
+
 (use-package evil
   :init
-  (setq evil-respect-visual-line-mode t)
-  (setq evil-want-keybinding nil)
-  (setq evil-want-integration t)
+  (setq evil-respect-visual-line-mode t
+        evil-want-keybinding nil
+        evil-want-integration t)
   :config
   (evil-mode t)
   (evil-ex-define-cmd "W[rite]" 'save-buffer)
@@ -96,91 +120,21 @@
   :config
   (evil-collection-init))
 
-;;; Org Mode
-(use-package org
-  :config
-  (setq org-src-window-setup 'other-window
-  org-src-fontify-natively t
-  org-src-tab-acts-natively t
-  org-edit-src-content-indentation 0
-  org-fontify-quote-and-verse-blocks t
-  org-confirm-babel-evaluate nil
-  org-hide-emphasis-markers t
-  org-startup-with-inline-images t
-  org-fast-tag-selection-single-key 'expert)
+;;;; ============================================================================
+;;;; EDITING
+;;;; ============================================================================
 
-  (org-babel-do-load-languages
-   'org-babel-load-languages
-   '((emacs-lisp . t)
-     (dot . t)
-     (ditaa . t)
-     (python . t)
-     (C . t)
-     (shell . t)))
-
-  (add-to-list 'org-src-lang-modes '("html" . web))
-
-  (add-hook 'org-babel-after-execute-hook
-      (lambda ()
-  (when org-inline-image-overlays
-    (org-redisplay-inline-images))))
-
-  (add-hook 'org-mode-hook 'auto-fill-mode)
-
-  (evil-define-key 'normal org-mode-map (kbd "TAB") 'org-cycle)
-
-  (defun org-font-lock-ensure ()
-    (font-lock-fontify-buffer)))
-
-;;; Tmux integration
-(setq tr--last-command nil)
-
-(defun tr (command)
-  "Run the specified command in the currently active tmux pane"
-  (interactive "sCommand: ")
-  (setq tr--last-command command)
-  (call-process "tmux" nil nil nil "send-keys" command "Enter"))
-
-(defun trr ()
-  "Re-run the previous command"
-  (interactive)
-  (if tr--last-command
-      (call-process "tmux" nil nil nil "send-keys" tr--last-command "Enter")
-    (message "No available previous command!")))
-
-(defun trb ()
-  (interactive)
-  (call-process "tmux" nil nil nil "send-keys" (buffer-string) "Enter"))
-
-(defun trl ()
-  (interactive)
-  (call-process "tmux" nil nil nil "send-keys" (thing-at-point 'line) "Enter"))
-
-(defun trh (start end)
-  (interactive "r")
-  (call-process "tmux" nil nil nil "send-keys" (buffer-substring start end) "Enter"))
-
-(global-set-key (kbd "C-c x") 'tr)
-(global-set-key (kbd "C-c r") 'trr)
-(global-set-key (kbd "C-c b") 'trb)
-(global-set-key (kbd "C-c h") 'trh)
-(global-set-key (kbd "C-c l") 'trl)
-
-;;; Compilation
-(define-key evil-normal-state-map (kbd "C-c c") 'recompile)
-
-;;; Man Pages
-(setq Man-notify-method 'pushy)
-
-;;; Editing Configuration
+;;; Indentation and formatting
 (setq-default c-basic-offset 2
-        tab-width 2
-        indent-tabs-mode nil
-        auto-save-default nil
-        backup-directory-alist `((".*" . ,temporary-file-directory))
-        auto-save-file-name-transforms `((".*" ,temporary-file-directory t)))
+              tab-width 2
+              indent-tabs-mode nil
+              auto-save-default nil
+              backup-directory-alist `((".*" . ,temporary-file-directory))
+              auto-save-file-name-transforms `((".*" ,temporary-file-directory t)))
+(setq js-indent-level 2)
+(setq auto-save-visited-interval 2)
 
-;;;; Smartparens
+;;; Smartparens
 (use-package smartparens
   :config
   (require 'smartparens-config)
@@ -192,192 +146,64 @@
   (define-key smartparens-mode-map (kbd "M-s") 'sp-splice-sexp)
   (define-key smartparens-mode-map (kbd "C-k") 'sp-kill-sexp))
 
-;;;; Parenthesis highlighting
+;;; Parenthesis highlighting
 (show-paren-mode t)
 
-;;;; Whitespace management
+;;; Whitespace
 (add-hook 'before-save-hook 'whitespace-cleanup)
 (setq require-final-newline t)
 
-;;; Menus
+;;;; ============================================================================
+;;;; COMPLETION
+;;;; ============================================================================
+
 (use-package ivy
-  :config
-  (ivy-mode 1))
+  :config (ivy-mode 1))
 
 (use-package counsel
-  :config
-  (counsel-mode 1))
+  :config (counsel-mode 1))
 
-;;; Language/Project Specific Configuration
-;;;; BUCK files
-(add-to-list 'auto-mode-alist '(".*/BUCK$" . python-mode))
-
-;;;; Web Mode
-(use-package web-mode
-  :config
-  (setq web-mode-markup-indent-offset 2
-  web-mode-css-indent-offset 2
-  web-mode-code-indent-offset 2
-  web-mode-style-padding 2
-  web-mode-script-padding 2
-  web-mode-auto-quote-style 2))
-
-;;;; Monky (Mercurial)
-(use-package monky
-  :config
-  (setq monky-process-type 'cmdserver)
-
-  (defun hg-file-history ()
-    (interactive)
-    (require 'monky)
-    (monky-run-hg-async
-     "log"
-     "--template"
-     "\n{rev}) {date|shortdate}/{author|user}\n{desc|fill68}\n↘\n"
-     buffer-file-name)))
-
-;;; Utilities
-(defun path ()
-  "Display the full path of the current buffer."
-  (interactive)
-  (kill-new (buffer-file-name))
-  (message (buffer-file-name)))
-
-;;; GDB Configuration
-(setq gdb-many-windows t)
-
-;;; Dired Configuration
-(add-hook 'dired-mode-hook
-    (lambda ()
-      (dired-hide-details-mode 1)))
-
-(setq dired-use-ls-dired nil)
-
-;;; Auto Completion
 (use-package company
   :hook (prog-mode . company-mode)
   :config
   (add-hook 'company-mode-hook
-      (lambda ()
-  (define-key evil-insert-state-map (kbd "C-.") 'company-complete)))
+            (lambda ()
+              (define-key evil-insert-state-map (kbd "C-.") 'company-complete)))
   (setq company-tooltip-align-annotations t
-  company-idle-delay 0.1
-  company-minimum-prefix-length 2))
+        company-idle-delay 0.1
+        company-minimum-prefix-length 2))
 
-;;; Buffer Management
-(defun close-all-buffers ()
-  "Close all open buffers."
-  (interactive)
-  (mapc 'kill-buffer (buffer-list)))
+;;;; ============================================================================
+;;;; ORG MODE
+;;;; ============================================================================
 
-(defun revert-all-buffers ()
-  "Refresh all open buffers from their respective files."
-  (interactive)
-  (dolist (buf (buffer-list))
-    (with-current-buffer buf
-      (when (buffer-file-name)
-  (revert-buffer t t t)))))
-
-;;; Theme Manipulation
-(defun desaturate-color (color-hex)
-  "Converts a color string to its desaturated equivalent hex string"
-  (require 'color)
-  (apply
-   'color-rgb-to-hex
-   (append (apply
-      'color-hsl-to-rgb
-      (apply
-       'color-desaturate-hsl
-       `(,@(apply 'color-rgb-to-hsl (color-name-to-rgb color-hex)) 100)))
-     '(2))))
-
-(defun transform-theme-colors (fn)
-  "Apply FN to the colors on every active face.
-
-   FN should accept the face symbol and the current color,
-   and return the new color to be applied."
-  (interactive)
-  (mapc
-   (lambda (face)
-     (mapc
-      (lambda (attr)
-  (let ((current (face-attribute face attr)))
-    (unless (or (not current)
-    (listp current)
-    (string= current "unspecified")
-    (string= current "t"))
-      (set-face-attribute face nil attr (funcall fn face current)))))
-      '(:foreground :background :underline :overline :box :strike-through
-  :distant-foreground))
-     (mapc
-      (lambda (complex-attr)
-  (let* ((full (copy-tree (face-attribute face complex-attr)))
-   (current (if (listp full) (member :color full))))
-    (unless (or (not current)
-    (not (listp full)))
-      (setcar (cdr current) (funcall fn face (cadr current)))
-      (set-face-attribute face nil complex-attr full))))
-      '(:underline :overline :box)))
-   (face-list)))
-
-(defun desaturate-theme ()
-  "Desaturate all currently active face colors."
-  (interactive)
-  (transform-theme-colors
-   (lambda (face color)
-     (desaturate-color color))))
-
-(defun invert-theme ()
-  "Take the complement of all currently active colors."
-  (interactive)
-  (require 'color)
-  (transform-theme-colors
-   (lambda (face color)
-     (apply
-      'color-rgb-to-hex
-      (color-complement color))))
-  (let ((current-ns-appearance (assoc 'ns-appearance default-frame-alist)))
-    (cond ((eq (cdr current-ns-appearance) 'light)
-     (setf (cdr current-ns-appearance) 'dark))
-    ((eq (cdr current-ns-appearance) 'dark)
-     (setf (cdr current-ns-appearance) 'light)))))
-
-;;; Mode Line Configuration
-(setq mode-line-format
-      (list
-       "%& %b%n"
-       " ~ "
-       "%m"
-       " ~ "
-       "%l:%c"))
-
-;;; Performance Tweaks
-(setq-default xterm-query-timeout nil)
-
-;;; JavaScript Configuration
-(setq js-indent-level 2)
-
-;;; Markdown configuration
-(use-package markdown-mode
-  :mode (("README\\.md\\'" . gfm-mode)
-   ("\\.md\\'" . markdown-mode)
-   ("\\.markdown\\'" . markdown-mode))
-  :init (setq markdown-command "multimarkdown")
+(use-package org
   :config
-  ;; Enable visual-line-mode (word wrap)
-  (add-hook 'markdown-mode-hook 'visual-line-mode)
-  (add-hook 'markdown-mode-hook 'variable-pitch-mode))
+  (setq org-src-window-setup 'other-window
+        org-src-fontify-natively t
+        org-src-tab-acts-natively t
+        org-edit-src-content-indentation 0
+        org-fontify-quote-and-verse-blocks t
+        org-confirm-babel-evaluate nil
+        org-hide-emphasis-markers t
+        org-startup-with-inline-images t
+        org-fast-tag-selection-single-key 'expert)
 
-;;; Zig
-(use-package zig-mode
-  :mode "\\.zig\\'"
-  :hook (zig-mode . eglot-ensure))
+  (org-babel-do-load-languages
+   'org-babel-load-languages
+   '((emacs-lisp . t) (dot . t) (ditaa . t) (python . t) (C . t) (shell . t)))
 
-;;; Go
-(use-package go-mode
-  :mode "\\.go\\'"
-  :hook (go-mode . eglot-ensure))
+  (add-to-list 'org-src-lang-modes '("html" . web))
+  (add-hook 'org-babel-after-execute-hook
+            (lambda () (when org-inline-image-overlays (org-redisplay-inline-images))))
+  (add-hook 'org-mode-hook 'auto-fill-mode)
+  (evil-define-key 'normal org-mode-map (kbd "TAB") 'org-cycle)
 
+  (defun org-font-lock-ensure () (font-lock-fontify-buffer)))
+
+;;;; ============================================================================
+;;;; PROGRAMMING LANGUAGES
+;;;; ============================================================================
 
 ;;; LSP (eglot)
 (use-package eglot
@@ -390,36 +216,117 @@
   :custom (eglot-python-preset-lsp-server 'ty)
   :config (eglot-python-preset-setup))
 
-(global-set-key (kbd "C-c o") 'ff-find-other-file)
-
-;;; VSC mode configurations
-(setq vc-follow-symlinks t)
-
-;;; Bookmarks
-(setq bookmark-save-flag 1)
-
 ;;; Python
 (use-package python-mode
   :mode "\\.py\\'"
   :hook (python-mode . eglot-ensure))
-
 (use-package conda)
 (use-package blacken)
 (require 'python)
 
-;;; Shell/Terminal
+;;; Go
+(use-package go-mode
+  :mode "\\.go\\'"
+  :hook (go-mode . eglot-ensure))
+
+;;; Zig
+(use-package zig-mode
+  :mode "\\.zig\\'"
+  :hook (zig-mode . eglot-ensure))
+
+;;; Web
+(use-package web-mode
+  :config
+  (setq web-mode-markup-indent-offset 2
+        web-mode-css-indent-offset 2
+        web-mode-code-indent-offset 2
+        web-mode-style-padding 2
+        web-mode-script-padding 2
+        web-mode-auto-quote-style 2))
+
+;;; Markdown
+(use-package markdown-mode
+  :mode (("README\\.md\\'" . gfm-mode)
+         ("\\.md\\'" . markdown-mode)
+         ("\\.markdown\\'" . markdown-mode))
+  :init (setq markdown-command "multimarkdown")
+  :config
+  (add-hook 'markdown-mode-hook 'visual-line-mode)
+  (add-hook 'markdown-mode-hook 'variable-pitch-mode))
+
+;;; BUCK files
+(add-to-list 'auto-mode-alist '(".*/BUCK$" . python-mode))
+
+;;; C/C++
+(global-set-key (kbd "C-c o") 'ff-find-other-file)
+
+;;;; ============================================================================
+;;;; VERSION CONTROL
+;;;; ============================================================================
+
+(use-package magit)
+
+(use-package monky
+  :config
+  (setq monky-process-type 'cmdserver)
+  (defun hg-file-history ()
+    (interactive)
+    (require 'monky)
+    (monky-run-hg-async
+     "log" "--template"
+     "\n{rev}) {date|shortdate}/{author|user}\n{desc|fill68}\n↘\n"
+     buffer-file-name)))
+
+(setq vc-follow-symlinks t)
+
+;;;; ============================================================================
+;;;; SHELL / TERMINAL
+;;;; ============================================================================
+
 (use-package vterm)
 
-;;; Path and clipboard
-(require 'utils)
-(set-exec-path-from-shell)
+;;; Tmux integration
+(setq tr--last-command nil)
 
-(require 'clipboard)
+(defun tr (command)
+  "Run COMMAND in the currently active tmux pane."
+  (interactive "sCommand: ")
+  (setq tr--last-command command)
+  (call-process "tmux" nil nil nil "send-keys" command "Enter"))
 
-;;; Writing
-(use-package olivetti)
+(defun trr ()
+  "Re-run the previous tmux command."
+  (interactive)
+  (if tr--last-command
+      (call-process "tmux" nil nil nil "send-keys" tr--last-command "Enter")
+    (message "No previous command")))
 
-;;; AI/LLM
+(defun trb ()
+  "Send buffer to tmux."
+  (interactive)
+  (call-process "tmux" nil nil nil "send-keys" (buffer-string) "Enter"))
+
+(defun trl ()
+  "Send current line to tmux."
+  (interactive)
+  (call-process "tmux" nil nil nil "send-keys" (thing-at-point 'line) "Enter"))
+
+(defun trh (start end)
+  "Send region to tmux."
+  (interactive "r")
+  (call-process "tmux" nil nil nil "send-keys" (buffer-substring start end) "Enter"))
+
+(global-set-key (kbd "C-c x") 'tr)
+(global-set-key (kbd "C-c r") 'trr)
+(global-set-key (kbd "C-c b") 'trb)
+(global-set-key (kbd "C-c h") 'trh)
+(global-set-key (kbd "C-c l") 'trl)
+
+;;;; ============================================================================
+;;;; AI / LLM INTEGRATION
+;;;; ============================================================================
+
+;;; gptel - LLM chat interface
 (use-package gptel
   :config
   (gptel-make-openai "DeepSeek"
@@ -432,19 +339,121 @@
     :stream t
     :key (getenv "ANTHROPIC_API_KEY")))
 
-;;; Version control
-(use-package magit)
+;;; eca - Emacs Claude Agent
+(use-package eca)
 
-;;; Themes (install options)
+;;; agent-shell - Shell interface for AI agents
+(use-package agent-shell)
+
+;;;; ============================================================================
+;;;; UTILITIES
+;;;; ============================================================================
+
+;;; Buffer management
+(defun close-all-buffers ()
+  "Close all open buffers."
+  (interactive)
+  (mapc 'kill-buffer (buffer-list)))
+
+(defun revert-all-buffers ()
+  "Refresh all open buffers from their files."
+  (interactive)
+  (dolist (buf (buffer-list))
+    (with-current-buffer buf
+      (when (buffer-file-name)
+        (revert-buffer t t t)))))
+
+;;; Path utility
+(defun path ()
+  "Copy and display the full path of the current buffer."
+  (interactive)
+  (kill-new (buffer-file-name))
+  (message (buffer-file-name)))
+
+;;; Theme manipulation
+(defun desaturate-color (color-hex)
+  "Convert COLOR-HEX to its desaturated equivalent."
+  (require 'color)
+  (apply 'color-rgb-to-hex
+         (append (apply 'color-hsl-to-rgb
+                        (apply 'color-desaturate-hsl
+                               `(,@(apply 'color-rgb-to-hsl
+                                          (color-name-to-rgb color-hex)) 100)))
+                 '(2))))
+
+(defun transform-theme-colors (fn)
+  "Apply FN to colors on every active face."
+  (mapc
+   (lambda (face)
+     (mapc
+      (lambda (attr)
+        (let ((current (face-attribute face attr)))
+          (unless (or (not current) (listp current)
+                      (string= current "unspecified") (string= current "t"))
+            (set-face-attribute face nil attr (funcall fn face current)))))
+      '(:foreground :background :underline :overline :box :strike-through :distant-foreground))
+     (mapc
+      (lambda (complex-attr)
+        (let* ((full (copy-tree (face-attribute face complex-attr)))
+               (current (if (listp full) (member :color full))))
+          (unless (or (not current) (not (listp full)))
+            (setcar (cdr current) (funcall fn face (cadr current)))
+            (set-face-attribute face nil complex-attr full))))
+      '(:underline :overline :box)))
+   (face-list)))
+
+(defun desaturate-theme ()
+  "Desaturate all currently active face colors."
+  (interactive)
+  (transform-theme-colors (lambda (_face color) (desaturate-color color))))
+
+(defun invert-theme ()
+  "Take the complement of all currently active colors."
+  (interactive)
+  (require 'color)
+  (transform-theme-colors
+   (lambda (_face color) (apply 'color-rgb-to-hex (color-complement color))))
+  (let ((current-ns-appearance (assoc 'ns-appearance default-frame-alist)))
+    (cond ((eq (cdr current-ns-appearance) 'light)
+           (setf (cdr current-ns-appearance) 'dark))
+          ((eq (cdr current-ns-appearance) 'dark)
+           (setf (cdr current-ns-appearance) 'light)))))
+
+;;; Writing
+(use-package olivetti)
+
+;;;; ============================================================================
+;;;; MISCELLANEOUS
+;;;; ============================================================================
+
+;;; Compilation
+(define-key evil-normal-state-map (kbd "C-c c") 'recompile)
+
+;;; Man pages
+(setq Man-notify-method 'pushy)
+
+;;; GDB
+(setq gdb-many-windows t)
+
+;;; Dired
+(add-hook 'dired-mode-hook (lambda () (dired-hide-details-mode 1)))
+(setq dired-use-ls-dired nil)
+
+;;; Bookmarks
+(setq bookmark-save-flag 1)
+
+;;;; ============================================================================
+;;;; THEMES
+;;;; ============================================================================
+
 (use-package poet-theme)
 (use-package ef-themes)
 (use-package acme-theme)
 
-;;; Display
-(setq display-line-numbers-width 4)
-(setq auto-save-visited-interval 2)
+;;;; ============================================================================
+;;;; LOCAL CONFIG
+;;;; ============================================================================
 
-;;; Add any local files
 (setq local-config (concat user-emacs-directory "local.el"))
 (when (file-exists-p local-config)
   (load-file local-config))
