@@ -1,8 +1,7 @@
-;;; python.el --- Python environment helpers  -*- lexical-binding: t; -*-
+;;; uv.el --- uv virtual environment helpers  -*- lexical-binding: t; -*-
 
 ;;; Commentary:
-;; Functions for working with Python virtual environments,
-;; particularly those managed by uv.
+;; Functions for working with Python virtual environments managed by uv.
 
 (defun uv-activate (&optional arg)
   "Activate Python environment managed by uv.
@@ -31,5 +30,5 @@ Looks for .venv in project root. With prefix ARG, prompt for path."
           (message "Activated venv: %s" venv-path))
       (error "No venv found at %s" venv-path))))
 
-(provide 'python)
-;;; python.el ends here
+(provide 'uv)
+;;; uv.el ends here
