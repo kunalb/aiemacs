@@ -1,4 +1,19 @@
-straight/
-eln-cache/
+# Emacs generated
+*.elc
+*~
+\#*\#
+.\#*
+
+# Emacs state/cache
 auto-save-list/
 custom.el
+eln-cache/
+projects.eld
+tramp
+transient/
+tree-sitter/
+
+# Package managers
+straight/
+elpa/
+eca/
