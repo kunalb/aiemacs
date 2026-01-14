@@ -141,11 +141,11 @@ Looks for .venv directory in project root and activates the Python interpreter."
 ;; Prevent flickering at the edges
 (setq display-line-numbers-width 4)
 
-(straight-use-package 'poet-theme)
-(straight-use-package 'ef-themes)
-(straight-use-package 'acme-theme)
-(straight-use-package 'blacken)
-(straight-use-package 'magit)
+(use-package poet-theme)
+(use-package ef-themes)
+(use-package acme-theme)
+(use-package blacken)
+(use-package magit)
 
 (use-package eglot-python-preset
   :after eglot
