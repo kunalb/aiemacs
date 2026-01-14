@@ -74,5 +74,13 @@ BACKEND is one of: claude, codex, gemini. Prompts if not specified."
   (interactive)
   (ai-execute-region (line-beginning-position) (line-end-position) backend))
 
+(defun ai-setup-keys ()
+  "Set up AI keybindings under C-c a prefix."
+  (global-set-key (kbd "C-c a a") 'ai-execute-region)
+  (global-set-key (kbd "C-c a l") 'ai-execute-line)
+  (global-set-key (kbd "C-c a c") 'ai-execute-with-claude)
+  (global-set-key (kbd "C-c a x") 'ai-execute-with-codex)
+  (global-set-key (kbd "C-c a g") 'ai-execute-with-gemini))
+
 (provide 'ai)
 ;;; ai.el ends here

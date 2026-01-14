@@ -314,6 +314,7 @@
 
 ;;; ai.el - Execute agents on file with instruction from region
 (require 'ai)
+(ai-setup-keys)
 
 ;;;; ============================================================================
 ;;;; UTILITIES
