@@ -1,7 +1,6 @@
 ;;; local.el --- Host specific initialization  -*- lexical-binding: t; -*-
 
 (use-package nordic-night-theme
-  :ensure t
   :config
   (load-theme 'nordic-night))
 (set-face-attribute 'default nil :font "Berkeley Mono-9")
@@ -56,23 +55,19 @@ apps are not started from a shell."
 
 
 (use-package eglot
-  :ensure t
   :config
   (add-to-list 'eglot-server-programs
    `((python-ts-mode python-mode) . ("pyrefly" "lsp"))))
 
 
 (use-package company
-  :ensure t
   :hook (eglot-managed-mode . company-mode))
 
 (use-package olivetti)
 
 
 (use-package gptel
-  :ensure t
   :config
-
   (gptel-make-openai "DeepSeek"
     :host "api.deepseek.com"
     :endpoint "/chat/completions"
@@ -92,8 +87,7 @@ apps are not started from a shell."
     :stream t
     :models '(qwen2.5-7b-instruct-qnn-npu:1 deepseek-r1-distill-qwen-14b-qnn-npu:1))))
 
-(use-package conda
-  :ensure t)
+(use-package conda)
 
 
 ; https://mclare.blog/posts/using-uv-in-emacs/
@@ -154,7 +148,6 @@ Looks for .venv directory in project root and activates the Python interpreter."
 (straight-use-package 'magit)
 
 (use-package eglot-python-preset
-  :ensure t
   :after eglot
   :custom (eglot-python-preset-lsp-server 'ty)
   :config (eglot-python-preset-setup))
