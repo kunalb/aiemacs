@@ -290,6 +290,43 @@
 (tmux-setup-keys)
 
 ;;;; ============================================================================
+;;;; TRAMP (REMOTE FILES)
+;;;; ============================================================================
+
+(use-package tramp
+  :straight (:type built-in)
+  :config
+  ;; Use ssh by default (faster than scp)
+  (setq tramp-default-method "ssh")
+
+  ;; Disable version control for remote files (major speedup)
+  (setq vc-ignore-dir-regexp
+        (format "\\(%s\\)\\|\\(%s\\)"
+                vc-ignore-dir-regexp
+                tramp-file-name-regexp))
+
+  ;; Cache remote files for better performance
+  (setq remote-file-name-inhibit-cache nil)
+
+  ;; Increase verbosity only when debugging (0 = silent, 3 = default)
+  (setq tramp-verbose 1)
+
+  ;; Reuse SSH connections (ControlMaster)
+  (setq tramp-use-ssh-controlmaster-options t)
+
+  ;; Don't save tramp backup files locally
+  (add-to-list 'backup-directory-alist
+               (cons tramp-file-name-regexp nil)))
+
+;; Disable projectile/project for remote files (optional speedup)
+(with-eval-after-load 'project
+  (defun project-try-local-override (dir)
+    "Don't search for project root on remote files."
+    (when (file-remote-p dir)
+      (cons 'transient dir)))
+  (add-hook 'project-find-functions #'project-try-local-override))
+
+;;;; ============================================================================
 ;;;; AI / LLM INTEGRATION
 ;;;; ============================================================================
 

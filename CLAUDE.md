@@ -40,6 +40,20 @@ lisp/            # Custom elisp modules
 3. No duplicate key bindings
 4. No undefined functions or variables
 5. Requires match provides in lisp/ modules
+6. Make sure CLAUDE.md is maintained based on discussions & design discussions
+
+## Tramp (Remote Files)
+
+Tramp is heavily used. Key considerations:
+- VC is disabled for remote files (performance)
+- Project detection uses transient mode for remote dirs
+- SSH ControlMaster reuses connections
+- AI agents (ai.el) work on remote files - pass full tramp path to CLI
+
+When editing remote files, test that:
+- File opens without delay
+- Saving works correctly
+- No VC or project scanning freezes
 
 ## Dependencies
 
@@ -47,6 +61,7 @@ lisp/            # Custom elisp modules
 - External CLIs: claude, codex, gemini (for ai.el)
 - tmux (for tmux.el)
 - clip.exe, powershell.exe (for clipboard.el on WSL2)
+- SSH with ControlMaster support (for tramp)
 
 ## API Keys
 
