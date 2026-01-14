@@ -92,9 +92,6 @@ apps are not started from a shell."
     :stream t
     :models '(qwen2.5-7b-instruct-qnn-npu:1 deepseek-r1-distill-qwen-14b-qnn-npu:1))))
 
-(use-package plisp-mode
-  :ensure t)
-
 (use-package conda
   :ensure t)
 
@@ -146,13 +143,6 @@ Looks for .venv directory in project root and activates the Python interpreter."
       (error "No UV Python environment found in %s" venv-path))))
 
 (use-package vterm)
-
-(use-package eca)
-
-(use-package agent-shell
-  :straight t
-  :ensure t)
-
 
 ;; Prevent flickering at the edges
 (setq display-line-numbers-width 4)
