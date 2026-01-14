@@ -1,6 +1,6 @@
 # Project B: Rapid Agent Integration
 
-**Status:** Active
+**Status:** Active - Phase 1 Complete
 
 ## Goal
 
@@ -32,15 +32,21 @@ Invoke AI agents from within Emacs with minimal friction. Agents generate small 
 
 ## Implementation Steps
 
-### Phase 1: Basic Integration
-- [ ] Rewrite ai.el to use agent-shell instead of raw vterm
-- [ ] Pass file path + cursor position + instruction to agent
-- [ ] Receive patches through ACP, show via agent-shell-diff
-- [ ] Accept/reject flow updates buffer
+### Phase 1: Basic Integration ✓
+- [x] Rewrite ai.el to use agent-shell instead of raw vterm
+- [x] Pass file path + cursor position + instruction to agent
+- [x] Receive patches through ACP, show via agent-shell-diff
+- [x] Accept/reject flow updates buffer
+
+**Implementation notes:**
+- `ai--get-config` maps backend symbols to agent-shell configs
+- `ai--ensure-shell` reuses existing shell or creates new one
+- `agent-shell-insert :submit t` sends prompt and handles response
+- agent-shell handles diffs/permissions automatically via ACP
 
 ### Phase 2: Polish
 - [ ] Auto-revert buffer after accepted changes
-- [ ] Handle tramp paths correctly
+- [ ] Handle tramp paths correctly (pass full path, not just filename)
 - [ ] Multiple file changes in single session
 - [ ] Persist agent session for follow-up prompts
 
@@ -49,32 +55,37 @@ Invoke AI agents from within Emacs with minimal friction. Agents generate small 
 - [ ] Instruction history per file
 - [ ] Project-wide context (not just single file)
 
-## Key agent-shell Primitives to Use
+## Key Bindings
 
-- `agent-shell-diff` - Interactive diff display with keybindings
-- `acp-make-client` - Create agent connection
-- `acp-send-request` - Send prompts to agent
-- ACP file capabilities - Let agent read/write through Emacs
+| Key | Function |
+|-----|----------|
+| `C-c a a` | Execute region with backend prompt |
+| `C-c a l` | Execute current line with backend prompt |
+| `C-c a c` | Execute region with Claude |
+| `C-c a g` | Execute region with Gemini |
+| `C-c a x` | Execute region with Codex |
+| `C-c a RET` | Quick: execute line with Claude |
 
-## Design Decisions
+## Supported Backends
 
-1. **Use agent-shell's ACP layer** - Don't reinvent the agent communication
-2. **Keep ai.el thin** - Just orchestration, delegate to agent-shell
-3. **Single file focus first** - Multi-file can come later
-4. **Reuse diff UX** - agent-shell-diff already handles accept/reject well
+- `claude` - Claude Code via claude-code-acp
+- `gemini` - Gemini CLI
+- `codex` - OpenAI Codex
+- `opencode` - OpenCode
 
 ## Files
 
-- `lisp/ai.el` - Main entry points, keybindings
-- `lisp/ai-agent.el` - Agent session management (new)
+- `lisp/ai.el` - Main entry points, keybindings (~100 lines)
 - Depends on: agent-shell, acp
 
 ## Open Questions
 
-- How to handle agent "thinking" output? Show in minibuffer or dedicated area?
+- How to handle agent "thinking" output? (agent-shell shows in buffer)
 - Should instruction comment be deleted after successful apply?
 - How to handle agent errors gracefully?
+- Full file path vs filename in prompt?
 
 ---
 
 *Started: 2025-01-14*
+*Phase 1 Complete: 2025-01-14*
