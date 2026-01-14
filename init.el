@@ -312,6 +312,9 @@
 ;;; agent-shell - Shell interface for AI agents
 (use-package agent-shell)
 
+;;; ai.el - Execute agents on file with instruction from region
+(require 'ai)
+
 ;;;; ============================================================================
 ;;;; UTILITIES
 ;;;; ============================================================================
