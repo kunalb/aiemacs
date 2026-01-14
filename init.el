@@ -35,6 +35,9 @@
 (use-package project
   :straight (:type built-in))
 
+;;; Load custom lisp
+(add-to-list 'load-path (concat user-emacs-directory "lisp"))
+
 ;;; Customization
 (setq custom-file (concat user-emacs-directory "custom.el"))
 (load custom-file 'noerror)
@@ -402,74 +405,17 @@
 
 (use-package conda)
 (use-package blacken)
-
-(defun uv-activate (&optional arg)
-  "Activate Python environment managed by uv based on current project directory."
-  (interactive "P")
-  (let* ((project-root (when-let ((proj (project-current)))
-                         (project-root proj)))
-         (default-root (or project-root default-directory))
-         (venv-path (if arg
-                        (read-directory-name "Select venv directory: " default-root)
-                      (if project-root
-                          (expand-file-name ".venv" project-root)
-                        (error "Not in a project; use C-u to specify venv path manually"))))
-         (python-exe (if (eq system-type 'windows-nt)
-                         "Scripts/python.exe"
-                       "bin/python"))
-         (python-path (expand-file-name python-exe venv-path)))
-    (if (file-exists-p python-path)
-        (progn
-          (setq-local python-shell-interpreter python-path)
-          (setq-local python-shell-virtualenv-root venv-path)
-          (let ((venv-bin-dir (file-name-directory python-path)))
-            (setq-local exec-path (cons venv-bin-dir (remove venv-bin-dir exec-path))))
-          (setq-local process-environment (copy-sequence process-environment))
-          (setenv "PATH" (concat (file-name-directory python-path) path-separator (getenv "PATH")))
-          (setenv "VIRTUAL_ENV" venv-path)
-          (setenv "PYTHONHOME" nil)
-          (message "Activated UV Python environment at %s" venv-path))
-      (error "No UV Python environment found in %s" venv-path))))
+(require 'python)
 
 ;;; Shell/Terminal
 (use-package vterm)
 
-;;; Path configuration
-(defun set-exec-path-from-shell-PATH ()
-  "Set up Emacs' `exec-path' and PATH to match the shell."
-  (interactive)
-  (let ((path-from-shell
-         (replace-regexp-in-string
-          "[ \t\n]*$" "" (shell-command-to-string
-                          "$SHELL --login -c 'echo $PATH'"))))
-    (setenv "PATH" path-from-shell)
-    (setq exec-path (split-string path-from-shell path-separator))))
-(set-exec-path-from-shell-PATH)
+;;; Path and clipboard
+(require 'utils)
+(set-exec-path-from-shell)
 
-;;; WSL2 clipboard integration
-(defun wsl--local-default-directory ()
-  (if (file-remote-p default-directory)
-      (file-name-as-directory (or (getenv "USERPROFILE") (getenv "HOME") user-emacs-directory))
-    default-directory))
-
-(defun wsl-copy (text &optional _push)
-  (let ((default-directory (wsl--local-default-directory))
-        (process-connection-type nil))
-    (when (executable-find "clip.exe")
-      (let ((proc (start-process "clip.exe" "*Messages*" "clip.exe")))
-        (process-send-string proc text)
-        (process-send-eof proc)))))
-
-(defun wsl-paste ()
-  (let ((default-directory (wsl--local-default-directory)))
-    (when (executable-find "powershell.exe")
-      (let ((raw (shell-command-to-string
-                  "powershell.exe -NoProfile -Command \"[Console]::Out.Write((Get-Clipboard -Raw))\"")))
-        (replace-regexp-in-string "\r" "" raw)))))
-
-(when (string-match-p "microsoft" (downcase (shell-command-to-string "uname -r")))
-  (setq interprogram-cut-function #'wsl-copy)
-  (setq interprogram-paste-function #'wsl-paste))
+(require 'clipboard)
+(clipboard-setup)
 
 ;;; Writing
 (use-package olivetti)
@@ -494,12 +440,6 @@
 (use-package poet-theme)
 (use-package ef-themes)
 (use-package acme-theme)
-
-;;; Utilities
-(defun knl-insert-timestamp ()
-  "Insert the current date/time."
-  (interactive)
-  (insert (format-time-string "%Y-%m-%d %H:%M")))
 
 ;;; Display
 (setq display-line-numbers-width 4)
