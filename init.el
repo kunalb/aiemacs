@@ -351,6 +351,20 @@
 ;;;; MISCELLANEOUS
 ;;;; ============================================================================
 
+;;; Quick config access
+(defun edit-init ()
+  "Open init.el for editing."
+  (interactive)
+  (find-file (concat user-emacs-directory "init.el")))
+
+(defun edit-local ()
+  "Open local.el for editing."
+  (interactive)
+  (find-file (concat user-emacs-directory "local.el")))
+
+(global-set-key (kbd "C-c e i") 'edit-init)
+(global-set-key (kbd "C-c e l") 'edit-local)
+
 ;;; Compilation
 (define-key evil-normal-state-map (kbd "C-c c") 'recompile)
 
