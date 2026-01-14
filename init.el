@@ -415,7 +415,6 @@
 (set-exec-path-from-shell)
 
 (require 'clipboard)
-(clipboard-setup)
 
 ;;; Writing
 (use-package olivetti)
