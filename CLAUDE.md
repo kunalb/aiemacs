@@ -68,12 +68,15 @@ plans/           # Project plans (versioned)
 
 ## Before Committing
 
-1. Byte-compile check: `emacs -Q --batch -f batch-byte-compile init.el lisp/*.el`
-2. Load test: `emacs --init-directory=~/.config/aiemacs --batch -l init.el`
-3. No duplicate key bindings
-4. No undefined functions or variables
-5. Requires match provides in lisp/ modules
-6. Keep CLAUDE.md and plans/ updated
+Run `make check` to verify:
+- No lisp/*.el files shadow built-in Emacs packages
+- Each file's `(provide 'X)` matches its filename
+- No duplicate global keybindings
+
+Additional checks:
+- `make byte-compile` - Compile all elisp files
+- Load test: `emacs --init-directory=~/.config/aiemacs --batch -l init.el`
+- Keep CLAUDE.md and plans/ updated
 
 ## Tramp (Remote Files)
 
