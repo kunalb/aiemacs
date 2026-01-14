@@ -53,16 +53,6 @@ apps are not started from a shell."
   (setq interprogram-cut-function #'wsl-copy)
   (setq interprogram-paste-function #'wsl-paste))
 
-
-(use-package eglot
-  :config
-  (add-to-list 'eglot-server-programs
-   `((python-ts-mode python-mode) . ("pyrefly" "lsp"))))
-
-
-(use-package company
-  :hook (eglot-managed-mode . company-mode))
-
 (use-package olivetti)
 
 
