@@ -399,8 +399,40 @@
   (interactive)
   (find-file (concat user-emacs-directory "local.el")))
 
+;;; Config reloading
+(defun reload-init ()
+  "Reload init.el."
+  (interactive)
+  (load-file (concat user-emacs-directory "init.el"))
+  (message "Reloaded init.el"))
+
+(defun reload-local ()
+  "Reload local.el."
+  (interactive)
+  (load-file (concat user-emacs-directory "local.el"))
+  (message "Reloaded local.el"))
+
+(defun reload-lisp ()
+  "Reload all lisp/*.el files."
+  (interactive)
+  (let ((lisp-dir (concat user-emacs-directory "lisp")))
+    (dolist (file (directory-files lisp-dir t "\\.el$"))
+      (load-file file))
+    (message "Reloaded lisp/*.el")))
+
+(defun reload-all ()
+  "Reload entire config: init.el, local.el, and lisp/*.el."
+  (interactive)
+  (reload-lisp)
+  (load-file (concat user-emacs-directory "init.el"))
+  (when (file-exists-p (concat user-emacs-directory "local.el"))
+    (load-file (concat user-emacs-directory "local.el")))
+  (message "Reloaded all config"))
+
 (global-set-key (kbd "C-c e i") 'edit-init)
 (global-set-key (kbd "C-c e l") 'edit-local)
+(global-set-key (kbd "C-c e r") 'reload-all)
+(global-set-key (kbd "C-c e R") 'reload-init)
 
 ;;; Compilation
 (define-key evil-normal-state-map (kbd "C-c c") 'recompile)
