@@ -55,7 +55,7 @@ plans/           # Project plans (versioned)
 | `C-c a c` | Prompt + Claude |
 | `C-c a g` | Prompt + Gemini |
 | `C-c a x` | Prompt + Codex |
-| `C-c e` | Edit config (i=init.el, l=local.el) |
+| `C-c e` | Config (i=edit init, l=edit local, r=reload all, R=reload init) |
 | `C-c x/r/b/h/l` | Tmux (send/resend/buffer/region/line) |
 
 ## Conventions
