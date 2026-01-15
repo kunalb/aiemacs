@@ -36,24 +36,25 @@ plans/           # Project plans (versioned)
 ```
 
 **Workflow:**
-1. Select instruction text (comment or region)
-2. `C-c a c` (or other backend key)
-3. agent-shell sends to agent with file context
-4. Agent proposes changes → shown as diff
-5. Accept (y) / Reject (n)
-6. Buffer auto-reverts with changes
+1. Position cursor or select region for context
+2. `C-c a a` (or `C-c a c` for Claude, etc.)
+3. Type instruction in minibuffer (or `C-c a b` for multi-line)
+4. agent-shell sends to agent with file + context
+5. Agent proposes changes → shown as diff
+6. Accept (y) / Reject (n)
 
 ## Key Bindings
 
 | Prefix | Purpose |
 |--------|---------|
 | `C-c a` | AI agents |
-| `C-c a a` | Execute region (prompt for backend) |
-| `C-c a l` | Execute line (prompt for backend) |
-| `C-c a c` | Execute with Claude |
-| `C-c a g` | Execute with Gemini |
-| `C-c a x` | Execute with Codex |
-| `C-c a RET` | Quick: execute line with Claude |
+| `C-c a a` | Prompt for instruction (uses context) |
+| `C-c a b` | Multi-line instruction buffer |
+| `C-c a r` | Prompt with region as context |
+| `C-c a .` | Repeat last instruction |
+| `C-c a c` | Prompt + Claude |
+| `C-c a g` | Prompt + Gemini |
+| `C-c a x` | Prompt + Codex |
 | `C-c e` | Edit config (i=init.el, l=local.el) |
 | `C-c x/r/b/h/l` | Tmux (send/resend/buffer/region/line) |
 
