@@ -1,13 +1,16 @@
 ;;; ai.el --- AI agent integration via agent-shell  -*- lexical-binding: t; -*-
 
 ;;; Commentary:
-;; Execute AI agents on file with instructions from comments/region.
+;; Invoke AI agents with context from current buffer.
 ;; Uses agent-shell for agent communication and interactive diff handling.
 
 (require 'agent-shell)
 
 (defvar ai-default-backend 'claude
   "Default AI backend. One of: claude, gemini, codex, opencode.")
+
+(defvar ai-last-instruction nil
+  "Last instruction sent to an agent.")
 
 (defun ai--get-config (backend)
   "Get agent-shell config for BACKEND."
@@ -18,92 +21,192 @@
     ('opencode (agent-shell-opencode-make-agent-config))
     (_ (error "Unknown backend: %s" backend))))
 
-(defun ai--strip-comment-markers (text)
-  "Strip common comment markers from TEXT."
-  (string-trim
-   (replace-regexp-in-string
-    "^[ \t]*\\(?://\\|#\\|;+\\|\\*\\|--\\)[ \t]*" ""
-    text)))
+(defun ai--gather-context ()
+  "Gather context from current buffer state.
+Returns plist with :file, :line, :region (if active)."
+  (let ((context (list :file (buffer-file-name)
+                       :line (line-number-at-pos))))
+    (when (use-region-p)
+      (plist-put context :region
+                 (buffer-substring-no-properties
+                  (region-beginning) (region-end)))
+      (plist-put context :region-start (line-number-at-pos (region-beginning)))
+      (plist-put context :region-end (line-number-at-pos (region-end))))
+    context))
 
-(defun ai--build-prompt (instruction file line)
-  "Build prompt for AI agent with INSTRUCTION, FILE and LINE context."
-  (format "In file `%s` around line %d:\n\n%s"
-          (file-name-nondirectory file) line instruction))
+(defun ai--format-prompt (instruction context)
+  "Format INSTRUCTION with CONTEXT for the agent."
+  (let ((file (plist-get context :file))
+        (region (plist-get context :region))
+        (line (plist-get context :line)))
+    (concat
+     (when file
+       (format "File: %s\n" file))
+     (if region
+         (format "Lines %d-%d:\n```\n%s\n```\n\n"
+                 (plist-get context :region-start)
+                 (plist-get context :region-end)
+                 region)
+       (format "Cursor at line %d\n\n" line))
+     instruction)))
 
 (defun ai--ensure-shell (backend)
-  "Ensure an agent-shell exists for BACKEND, creating one if needed.
-Returns the shell buffer."
+  "Ensure an agent-shell exists for BACKEND, return buffer."
   (let* ((config (ai--get-config backend))
          (buffer-name (map-elt config :buffer-name))
          (existing (seq-find
                     (lambda (buf)
                       (with-current-buffer buf
                         (and (derived-mode-p 'agent-shell-mode)
-                             (string= (buffer-name) (format "*%s*" buffer-name)))))
+                             (string-match-p (regexp-quote buffer-name)
+                                             (buffer-name)))))
                     (buffer-list))))
-    (if existing
-        existing
-      ;; Start new shell
-      (agent-shell-start :config config)
-      (get-buffer (format "*%s*" buffer-name)))))
+    (or existing
+        (progn
+          (agent-shell-start :config config)
+          (get-buffer (format "*%s*" buffer-name))))))
 
-(defun ai-execute-region (start end &optional backend)
-  "Execute AI agent on current file with instruction from region.
-BACKEND is one of: claude, gemini, codex, opencode. Prompts if not specified."
-  (interactive "r")
-  (let* ((backend (or backend
-                      (intern (completing-read
-                               "Backend: "
-                               '("claude" "gemini" "codex" "opencode")
-                               nil t nil nil
-                               (symbol-name ai-default-backend)))))
-         (file (buffer-file-name))
-         (line (line-number-at-pos start))
-         (instruction (ai--strip-comment-markers
-                       (buffer-substring-no-properties start end)))
-         (prompt (ai--build-prompt instruction file line)))
-    (unless file
-      (error "Buffer must be visiting a file"))
-    ;; Save buffer before letting agent work on it
-    (save-buffer)
-    ;; Ensure shell exists and send prompt
+(defun ai--read-instruction ()
+  "Read instruction from user, with last instruction as default."
+  (let ((prompt (if ai-last-instruction
+                    (format "Instruction [%s]: "
+                            (truncate-string-to-width ai-last-instruction 30 nil nil "..."))
+                  "Instruction: ")))
+    (let ((input (read-string prompt nil nil ai-last-instruction)))
+      (when (string-empty-p input)
+        (user-error "No instruction provided"))
+      (setq ai-last-instruction input)
+      input)))
+
+(defun ai-prompt (&optional backend)
+  "Prompt for instruction and send to agent with current context.
+BACKEND is one of: claude, gemini, codex, opencode."
+  (interactive)
+  (let* ((backend (or backend ai-default-backend))
+         (context (ai--gather-context))
+         (instruction (ai--read-instruction))
+         (prompt (ai--format-prompt instruction context)))
+    (when (plist-get context :file)
+      (save-buffer))
     (ai--ensure-shell backend)
     (agent-shell-insert :text prompt :submit t)))
 
-(defun ai-execute-with-claude (start end)
-  "Execute Claude on region instruction."
+(defun ai-prompt-region (start end &optional backend)
+  "Prompt for instruction with region as context.
+START and END define the region. BACKEND specifies which agent to use."
   (interactive "r")
-  (ai-execute-region start end 'claude))
+  (let* ((backend (or backend ai-default-backend))
+         (context (list :file (buffer-file-name)
+                        :line (line-number-at-pos start)
+                        :region (buffer-substring-no-properties start end)
+                        :region-start (line-number-at-pos start)
+                        :region-end (line-number-at-pos end)))
+         (instruction (ai--read-instruction))
+         (prompt (ai--format-prompt instruction context)))
+    (when (buffer-file-name)
+      (save-buffer))
+    (ai--ensure-shell backend)
+    (agent-shell-insert :text prompt :submit t)))
 
-(defun ai-execute-with-gemini (start end)
-  "Execute Gemini on region instruction."
-  (interactive "r")
-  (ai-execute-region start end 'gemini))
-
-(defun ai-execute-with-codex (start end)
-  "Execute Codex on region instruction."
-  (interactive "r")
-  (ai-execute-region start end 'codex))
-
-(defun ai-execute-line (&optional backend)
-  "Execute AI agent with instruction from current line."
+(defun ai-prompt-buffer (&optional backend)
+  "Open a buffer to compose a longer instruction."
   (interactive)
-  (ai-execute-region (line-beginning-position) (line-end-position) backend))
+  (let* ((backend (or backend ai-default-backend))
+         (context (ai--gather-context))
+         (source-buffer (current-buffer))
+         (buf (get-buffer-create "*ai-instruction*")))
+    (when (plist-get context :file)
+      (with-current-buffer source-buffer
+        (save-buffer)))
+    (pop-to-buffer buf)
+    (erase-buffer)
+    (ai-instruction-mode)
+    (setq-local ai--context context)
+    (setq-local ai--backend backend)
+    (setq-local ai--source-buffer source-buffer)
+    (insert "# Type instruction below, then C-c C-c to send, C-c C-k to cancel\n")
+    (insert "# Context: " (or (plist-get context :file) "no file"))
+    (when (plist-get context :region)
+      (insert (format " (lines %d-%d selected)"
+                      (plist-get context :region-start)
+                      (plist-get context :region-end))))
+    (insert "\n\n")))
 
-(defun ai-execute-line-claude ()
-  "Execute Claude on current line instruction."
+(defvar-local ai--context nil "Context for current instruction buffer.")
+(defvar-local ai--backend nil "Backend for current instruction buffer.")
+(defvar-local ai--source-buffer nil "Source buffer for current instruction.")
+
+(defun ai-instruction-send ()
+  "Send the instruction from the instruction buffer."
   (interactive)
-  (ai-execute-line 'claude))
+  (let* ((content (buffer-string))
+         ;; Strip header comments
+         (instruction (replace-regexp-in-string
+                       "^#.*\n" ""
+                       content))
+         (instruction (string-trim instruction))
+         (context ai--context)
+         (backend ai--backend)
+         (prompt (ai--format-prompt instruction context)))
+    (when (string-empty-p instruction)
+      (user-error "No instruction provided"))
+    (setq ai-last-instruction instruction)
+    (quit-window t)
+    (ai--ensure-shell backend)
+    (agent-shell-insert :text prompt :submit t)))
+
+(defun ai-instruction-cancel ()
+  "Cancel the instruction buffer."
+  (interactive)
+  (quit-window t))
+
+(define-derived-mode ai-instruction-mode text-mode "AI-Inst"
+  "Mode for composing AI instructions."
+  (setq-local header-line-format
+              '(" C-c C-c: send | C-c C-k: cancel")))
+
+(define-key ai-instruction-mode-map (kbd "C-c C-c") #'ai-instruction-send)
+(define-key ai-instruction-mode-map (kbd "C-c C-k") #'ai-instruction-cancel)
+
+;; Backend-specific commands
+(defun ai-claude ()
+  "Prompt for instruction and send to Claude."
+  (interactive)
+  (ai-prompt 'claude))
+
+(defun ai-gemini ()
+  "Prompt for instruction and send to Gemini."
+  (interactive)
+  (ai-prompt 'gemini))
+
+(defun ai-codex ()
+  "Prompt for instruction and send to Codex."
+  (interactive)
+  (ai-prompt 'codex))
+
+(defun ai-repeat ()
+  "Repeat last instruction with current context."
+  (interactive)
+  (unless ai-last-instruction
+    (user-error "No previous instruction"))
+  (let* ((context (ai--gather-context))
+         (prompt (ai--format-prompt ai-last-instruction context)))
+    (when (plist-get context :file)
+      (save-buffer))
+    (ai--ensure-shell ai-default-backend)
+    (agent-shell-insert :text prompt :submit t)))
 
 (defun ai-setup-keys ()
   "Set up AI keybindings under C-c a prefix."
-  (global-set-key (kbd "C-c a a") 'ai-execute-region)
-  (global-set-key (kbd "C-c a l") 'ai-execute-line)
-  (global-set-key (kbd "C-c a c") 'ai-execute-with-claude)
-  (global-set-key (kbd "C-c a g") 'ai-execute-with-gemini)
-  (global-set-key (kbd "C-c a x") 'ai-execute-with-codex)
-  ;; Quick access
-  (global-set-key (kbd "C-c a RET") 'ai-execute-line-claude))
+  ;; Main entry points
+  (global-set-key (kbd "C-c a a") #'ai-prompt)        ; prompt with context
+  (global-set-key (kbd "C-c a b") #'ai-prompt-buffer) ; multi-line instruction
+  (global-set-key (kbd "C-c a r") #'ai-prompt-region) ; explicit region
+  (global-set-key (kbd "C-c a .") #'ai-repeat)        ; repeat last
+  ;; Backend shortcuts
+  (global-set-key (kbd "C-c a c") #'ai-claude)
+  (global-set-key (kbd "C-c a g") #'ai-gemini)
+  (global-set-key (kbd "C-c a x") #'ai-codex))
 
 (provide 'ai)
 ;;; ai.el ends here
