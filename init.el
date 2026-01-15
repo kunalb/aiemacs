@@ -120,6 +120,12 @@
   :config
   (evil-collection-init))
 
+;; Use emacs state in agent-shell diff buffers so y/n work
+(add-hook 'diff-mode-hook
+          (lambda ()
+            (when (string-match-p "agent-shell-diff" (buffer-name))
+              (evil-emacs-state))))
+
 ;;;; ============================================================================
 ;;;; EDITING
 ;;;; ============================================================================
