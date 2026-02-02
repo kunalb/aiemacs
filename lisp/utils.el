@@ -1,10 +1,12 @@
 ;;; utils.el --- Utility functions  -*- lexical-binding: t; -*-
 
+;;;###autoload
 (defun insert-timestamp ()
   "Insert current date/time in compact format."
   (interactive)
   (insert (format-time-string "%Y-%m-%d %H:%M")))
 
+;;;###autoload
 (defun set-exec-path-from-shell ()
   "Sync exec-path with shell PATH."
   (interactive)

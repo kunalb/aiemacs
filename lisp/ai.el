@@ -78,6 +78,7 @@ Returns plist with :file, :line, :region (if active)."
       (setq ai-last-instruction input)
       input)))
 
+;;;###autoload
 (defun ai-prompt (&optional backend)
   "Prompt for instruction and send to agent with current context.
 BACKEND is one of: claude, gemini, codex, opencode."
@@ -91,6 +92,7 @@ BACKEND is one of: claude, gemini, codex, opencode."
     (ai--ensure-shell backend)
     (agent-shell-insert :text prompt :submit t)))
 
+;;;###autoload
 (defun ai-prompt-region (start end &optional backend)
   "Prompt for instruction with region as context.
 START and END define the region. BACKEND specifies which agent to use."
@@ -108,6 +110,7 @@ START and END define the region. BACKEND specifies which agent to use."
     (ai--ensure-shell backend)
     (agent-shell-insert :text prompt :submit t)))
 
+;;;###autoload
 (defun ai-prompt-buffer (&optional backend)
   "Open a buffer to compose a longer instruction."
   (interactive)
@@ -169,21 +172,25 @@ START and END define the region. BACKEND specifies which agent to use."
 (define-key ai-instruction-mode-map (kbd "C-c C-k") #'ai-instruction-cancel)
 
 ;; Backend-specific commands
+;;;###autoload
 (defun ai-claude ()
   "Prompt for instruction and send to Claude."
   (interactive)
   (ai-prompt 'claude))
 
+;;;###autoload
 (defun ai-gemini ()
   "Prompt for instruction and send to Gemini."
   (interactive)
   (ai-prompt 'gemini))
 
+;;;###autoload
 (defun ai-codex ()
   "Prompt for instruction and send to Codex."
   (interactive)
   (ai-prompt 'codex))
 
+;;;###autoload
 (defun ai-repeat ()
   "Repeat last instruction with current context."
   (interactive)
@@ -196,6 +203,7 @@ START and END define the region. BACKEND specifies which agent to use."
     (ai--ensure-shell ai-default-backend)
     (agent-shell-insert :text prompt :submit t)))
 
+;;;###autoload
 (defun ai-setup-keys ()
   "Set up AI keybindings under C-c a prefix."
   ;; Main entry points

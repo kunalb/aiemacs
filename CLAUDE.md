@@ -56,6 +56,14 @@ plans/           # Project plans (versioned)
 | `C-c a g` | Prompt + Gemini |
 | `C-c a x` | Prompt + Codex |
 | `C-c e` | Config (i=edit init, l=edit local, r=reload all, R=reload init) |
+| `C-c j` | Jupyter (python-mode) |
+| `C-c j j` | Start Jupyter REPL |
+| `C-c j J` | Start REPL + autoreload |
+| `C-c j c` | Eval line or region |
+| `C-c j b` | Eval buffer |
+| `C-c j f` | Eval defun |
+| `C-c j a` | Enable autoreload |
+| `C-c j R` | Restart kernel |
 | `C-c x/r/b/h/l` | Tmux (send/resend/buffer/region/line) |
 
 ## Conventions

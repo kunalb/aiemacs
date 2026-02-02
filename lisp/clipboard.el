@@ -4,6 +4,7 @@
 ;; Explicit Windows clipboard commands. Emacs kill-ring stays fast by default.
 ;; Use these commands only when you need to interact with Windows apps.
 
+;;;###autoload
 (defun wsl-copy-region (start end)
   "Copy region to Windows clipboard."
   (interactive "r")
@@ -14,6 +15,7 @@
       (process-send-eof proc))
     (message "Copied to Windows clipboard")))
 
+;;;###autoload
 (defun wsl-copy-kill ()
   "Copy current kill to Windows clipboard."
   (interactive)
@@ -24,6 +26,7 @@
       (process-send-eof proc))
     (message "Copied kill to Windows clipboard")))
 
+;;;###autoload
 (defun wsl-paste ()
   "Paste from Windows clipboard at point."
   (interactive)

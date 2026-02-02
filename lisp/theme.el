@@ -32,11 +32,13 @@ FN receives face symbol and current color, returns new color."
       '(:underline :overline :box)))
    (face-list)))
 
+;;;###autoload
 (defun desaturate-theme ()
   "Desaturate all currently active face colors."
   (interactive)
   (transform-theme-colors (lambda (_face color) (desaturate-color color))))
 
+;;;###autoload
 (defun invert-theme ()
   "Invert all currently active colors to their complement."
   (interactive)

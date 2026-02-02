@@ -3,6 +3,7 @@
 ;;; Commentary:
 ;; Functions for working with Python virtual environments managed by uv.
 
+;;;###autoload
 (defun uv-activate (&optional arg)
   "Activate Python environment managed by uv.
 Looks for .venv in project root. With prefix ARG, prompt for path."

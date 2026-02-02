@@ -1,5 +1,6 @@
 # Emacs generated
 *.elc
+lisp/lisp-autoloads.el
 *~
 \#*\#
 .\#*
