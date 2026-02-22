@@ -1,9 +1,7 @@
 ;;; local.el --- Host specific settings  -*- lexical-binding: t; -*-
 
 ;;; Theme and font
-(use-package nordic-night-theme
-  :config
-  (load-theme 'nordic-night t))
+(load-theme 'horizons-chauds t)
 (set-face-attribute 'default nil :font "Berkeley Mono-9")
 
 ;;; Local LLM backend (Foundry on local network)

@@ -44,6 +44,7 @@
 (defvar lisp-dir (concat user-emacs-directory "lisp"))
 (defvar lisp-autoloads-file (concat lisp-dir "/lisp-autoloads.el"))
 (add-to-list 'load-path lisp-dir)
+(add-to-list 'custom-theme-load-path lisp-dir)
 
 ;; Generate autoloads if source files are newer than autoloads file
 (let ((autoloads-outdated
