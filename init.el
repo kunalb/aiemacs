@@ -503,6 +503,7 @@
 (use-package poet-theme)
 (use-package ef-themes)
 (use-package acme-theme)
+(use-package kaolin-themes)
 
 ;;;; ============================================================================
 ;;;; LOCAL CONFIG
