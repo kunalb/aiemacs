@@ -27,7 +27,7 @@
       ;; Palette - from the painting
       (scarlet    "#E04433")   ; keywords, errors
       (amber      "#E09030")   ; functions
-      (gold       "#D4A035")   ; strings
+      (gold       "#F0C850")   ; strings
       (solar      "#ECC040")   ; cursor, warnings, highlights
       (sienna     "#C87040")   ; builtins, operators
       (pink       "#D0887A")   ; types
