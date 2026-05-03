@@ -33,6 +33,7 @@
 (straight-use-package 'bind-key)
 (require 'use-package)
 (require 'bind-key)
+(require 'cl-lib)
 
 (use-package project
   :straight (:type built-in))
@@ -100,7 +101,9 @@
 
 ;;; Display settings
 (add-hook 'prog-mode-hook 'display-line-numbers-mode)
-(pixel-scroll-mode)
+(if (fboundp 'pixel-scroll-precision-mode)
+    (pixel-scroll-precision-mode)
+  (pixel-scroll-mode))
 (setq compilation-window-height 15)
 (setq-default truncate-lines t)
 (setq display-line-numbers-width 4)

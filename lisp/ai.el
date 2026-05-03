@@ -16,7 +16,7 @@
   "Get agent-shell config for BACKEND."
   (pcase backend
     ('claude (agent-shell-anthropic-make-claude-code-config))
-    ('gemini (agent-shell-google-make-gemini-cli-config))
+    ('gemini (agent-shell-google-make-gemini-config))
     ('codex (agent-shell-openai-make-codex-config))
     ('opencode (agent-shell-opencode-make-agent-config))
     (_ (error "Unknown backend: %s" backend))))
