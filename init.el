@@ -8,6 +8,7 @@
 ;;;; ============================================================================
 
 (setq package-enable-at-startup nil)
+; (setq byte-compile-warnings '(not lexical))
 
 ;;; Bootstrap straight.el
 (defvar bootstrap-version)
@@ -505,6 +506,7 @@
 (use-package ef-themes)
 (use-package acme-theme)
 (use-package kaolin-themes)
+(use-package tao-theme)
 
 ;;;; ============================================================================
 ;;;; LOCAL CONFIG
