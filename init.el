@@ -35,6 +35,18 @@
 (require 'bind-key)
 (require 'cl-lib)
 
+(unless (fboundp 'set-local)
+  (defun set-local (variable value)
+    "Set VARIABLE buffer-locally to VALUE."
+    (set (make-local-variable variable) value)))
+
+(defun aiemacs-suppress-lexical-binding-warning (orig type message &rest args)
+  "Suppress missing lexical-binding cookie warnings."
+  (unless (and (memq 'files (if (listp type) type (list type)))
+               (string-match-p "Missing .*lexical-binding" (format "%s" message)))
+    (apply orig type message args)))
+(advice-add 'display-warning :around #'aiemacs-suppress-lexical-binding-warning)
+
 (use-package project
   :straight (:type built-in))
 
@@ -176,21 +188,65 @@
 ;;;; COMPLETION
 ;;;; ============================================================================
 
-(use-package ivy
-  :config (ivy-mode 1))
+;;; Minibuffer completion: vertico + marginalia + orderless + consult + embark
+(use-package vertico
+  :init
+  (vertico-mode 1))
 
-(use-package counsel
-  :config (counsel-mode 1))
+(use-package vertico-directory
+  :straight (:type built-in)
+  :after vertico
+  :bind (:map vertico-map
+         ("RET" . vertico-directory-enter)
+         ("DEL" . vertico-directory-delete-char)
+         ("<backspace>" . vertico-directory-delete-char)
+         ("M-DEL" . vertico-directory-delete-word)
+         ("C-l" . vertico-directory-up))
+  :hook (rfn-eshadow-update-overlay . vertico-directory-tidy))
 
-(use-package company
-  :hook (prog-mode . company-mode)
+(use-package marginalia
+  :init
+  (marginalia-mode 1))
+
+(use-package orderless
+  :custom
+  (completion-styles '(orderless basic))
+  (completion-category-defaults nil)
+  (completion-category-overrides '((file (styles partial-completion)))))
+
+(use-package consult
+  :bind (("C-s"     . consult-line)
+         ("C-x b"   . consult-buffer)
+         ("C-x 4 b" . consult-buffer-other-window)
+         ("M-y"     . consult-yank-pop)
+         ("M-g g"   . consult-goto-line)
+         ("M-g i"   . consult-imenu)))
+
+(use-package embark
+  :bind (("C-;" . embark-act)))
+
+(use-package embark-consult
+  :after (embark consult)
+  :hook (embark-collect-mode . consult-preview-at-point-mode))
+
+;;; In-buffer completion: corfu + cape
+(use-package corfu
+  :init
+  (global-corfu-mode 1)
+  :custom
+  (corfu-cycle t)
+  (corfu-auto t)
+  (corfu-auto-prefix 2)
+  (corfu-auto-delay 0.1)
+  (corfu-quit-no-match 'separator)
+  (global-corfu-minibuffer nil)
   :config
-  (add-hook 'company-mode-hook
-            (lambda ()
-              (define-key evil-insert-state-map (kbd "C-.") 'company-complete)))
-  (setq company-tooltip-align-annotations t
-        company-idle-delay 0.1
-        company-minimum-prefix-length 2))
+  (define-key evil-insert-state-map (kbd "C-.") #'completion-at-point))
+
+(use-package cape
+  :init
+  (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+  (add-to-list 'completion-at-point-functions #'cape-file))
 
 ;;;; ============================================================================
 ;;;; ORG MODE
